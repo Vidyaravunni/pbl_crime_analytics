@@ -7,6 +7,8 @@ from stats_utils import bootstrap_ci, two_sample_ttest
 from ts_forecast import forecast_series
 from similarity import build_feature_matrix, recommend_similar
 import numpy as np
+import os
+
 
 DATA_PATH = "data/crime_data.csv"
 
@@ -118,4 +120,5 @@ st.sidebar.markdown("""
 - Similarity & recommender  
 - Optional: NLP, network analysis  
 """)
+
 
