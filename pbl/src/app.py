@@ -15,7 +15,7 @@ DATA_PATH = "data/crime_data.csv"
 @st.cache_data
 def load_and_clean(path=DATA_PATH):
     # Load CSV
-path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
+    path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
     df = pd.read_csv(path)
 
     # Normalize column names (strip spaces)
@@ -120,6 +120,7 @@ st.sidebar.markdown("""
 - Similarity & recommender  
 - Optional: NLP, network analysis  
 """)
+
 
 
 
