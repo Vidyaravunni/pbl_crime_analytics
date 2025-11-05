@@ -5,11 +5,11 @@ import pandas as pd
 import numpy as np
 import os
 
-from preprocess import load_and_clean, aggregate_by_area
-from eda import plot_time_series, plot_top_crimes, plot_pie_composition, correlation_heatmap
-from stats_utils import bootstrap_ci, two_sample_ttest
-from ts_forecast import forecast_series
-from similarity import build_feature_matrix, recommend_similar
+from src.preprocess import load_and_clean, aggregate_by_area
+from src.eda import plot_time_series, plot_top_crimes, plot_pie_composition, correlation_heatmap
+from src.stats_utils import bootstrap_ci, two_sample_ttest
+from src.ts_forecast import forecast_series
+from src.similarity import build_feature_matrix, recommend_similar
 
 DATA_PATH = "data/crime_data.csv"
 
@@ -121,6 +121,7 @@ st.sidebar.markdown("""
 - Similarity & recommender  
 - Optional: NLP, network analysis  
 """)
+
 
 
 
