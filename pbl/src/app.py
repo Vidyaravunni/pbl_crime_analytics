@@ -114,15 +114,6 @@ if st.button("Show Analysis"):
                 top = df[df['STATE/UT']==state].groupby('DISTRICT')[['Rape']].sum().sort_values('Rape', ascending=False).head(5)
                 st.table(top)
 
-st.sidebar.header("Project Modules")
-st.sidebar.markdown("""
-- EDA: time series, heatmaps  
-- Stats: bootstrap CI, t-tests  
-- Forecasting: ARIMA  
-- Similarity & recommender  
-- Optional: NLP, network analysis  
-""")
-
 
 
 
