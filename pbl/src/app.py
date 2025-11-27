@@ -141,3 +141,4 @@ if st.button("Show Analysis"):
                 st.info("Could not compute similarity — showing top districts instead.")
                 top = df[df['STATE/UT'] == state].groupby("DISTRICT")[["Rape"]].sum().sort_values("Rape", ascending=False).head(5)
                 st.table(top)
+
