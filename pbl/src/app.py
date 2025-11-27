@@ -1,3 +1,5 @@
+
+
 # pbl/src/app.py
 
 import streamlit as st
@@ -15,6 +17,7 @@ from similarity import build_feature_matrix, recommend_similar
 # =====================
 # DATA LOADING
 # =====================
+@st.cache_data
 def load_and_clean():
     path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
     df = pd.read_csv(path)
@@ -140,5 +143,4 @@ if st.button("Show Analysis"):
                 st.info("Could not compute similarity — showing top districts instead.")
                 top = df[df['STATE/UT'] == state].groupby("DISTRICT")[["Rape"]].sum().sort_values("Rape", ascending=False).head(5)
                 st.table(top)
-
 
