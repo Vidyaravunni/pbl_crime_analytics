@@ -147,16 +147,7 @@ if not st.session_state.show_form:
                     )
                     st.table(top)
 
-    # Sidebar information
-    st.sidebar.header("Project Modules")
-    st.sidebar.markdown("""
-    - EDA: time series, heatmaps  
-    - Stats: bootstrap CI, t-tests  
-    - Forecasting: ARIMA  
-    - Similarity & recommender  
-    - Optional: NLP, network analysis  
-    """)
-
+  
 else:
     # -------------------- Report Form --------------------
     st.subheader("Report a New Crime Record")
@@ -207,4 +198,5 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
