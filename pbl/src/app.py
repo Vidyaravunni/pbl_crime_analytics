@@ -156,14 +156,15 @@ else:
         st.write("### Enter Crime Details")
 
         # Dropdowns and inputs
-        state_ut = st.selectbox("Select State", sorted(df['STATE/UT'].unique()))
-        state_districts = sorted(df[df['STATE/UT'] == state_ut]['DISTRICT'].unique())
-        state_districts.append("➕ Other (Enter manually)")
+        states = sorted(df['STATE/UT'].unique())
+        state_ut = st.selectbox("Select State", ["Select State"] + states)
 
-        district = st.selectbox("Select District", state_districts)
-
-        if district == "➕ Other (Enter manually)":
-            district = st.text_input("Enter new district name")
+        # --- District Dropdown (dependent on state) ---
+        if state_ut == "Select State":
+            district = st.selectbox("Select District", ["Select District"])
+        else:
+            district_list = sorted(df[df['STATE/UT'] == state_ut]['DISTRICT'].unique())
+            district = st.selectbox("Select District", ["Select District"] + list(district_list))
 
         year = st.number_input("Year", min_value=2001, max_value=2030, value=2025)
 
@@ -205,6 +206,7 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
 
