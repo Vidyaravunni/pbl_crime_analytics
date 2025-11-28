@@ -15,7 +15,7 @@ DATA_PATH = "data/crime_data.csv"
 
 @st.cache_data
 def load_and_clean(path=DATA_PATH):
-    path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
+    path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
     df = pd.read_csv(path)
 
     # Normalize column names
@@ -192,7 +192,7 @@ else:
                 'Cruelty by Husband or his Relatives': int(cruelty)
             }
 
-            csv_path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
+            csv_path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
 
             # Append directly to CSV
             existing_df = pd.read_csv(csv_path)
@@ -207,3 +207,4 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
