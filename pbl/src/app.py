@@ -82,7 +82,7 @@ if state and district:
 # =====================
 if st.session_state.show_report and state and district:
 
-    st.subheader("2. USER-REPORTED CRIME INPUT")
+    st.subheader("USER-REPORTED CRIME INPUT")
 
     crime_columns = [
         "Rape",
@@ -168,3 +168,4 @@ if st.button("Show Analysis"):
                     .head(5)
                 )
                 st.table(top)
+
