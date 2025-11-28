@@ -155,19 +155,6 @@ else:
     with st.form("crime_report_form", clear_on_submit=True):
         st.write("### Enter Crime Details")
 
-        # Dropdowns and inputs# Input selectors
-        # ----- STATE DROPDOWN -----
-        states = sorted(df['STATE/UT'].unique())
-        state_ut = st.selectbox("Select State", ["Select State"] + states)
-
-        # ----- DISTRICT DROPDOWN (BASED ON SELECTED STATE) -----
-        if state_ut == "Select State":
-            district = st.selectbox("Select District", ["Select District"])
-        else:
-            district_list = sorted(df[df['STATE/UT'] == state_ut]['DISTRICT'].unique())
-            district = st.selectbox("Select District", ["Select District"] + list(district_list))
-
-
         year = st.number_input("Year", min_value=2001, max_value=2030, value=2025)
 
         st.markdown("#### Enter Crime Counts:")
@@ -179,6 +166,7 @@ else:
         cruelty = st.number_input("Cruelty by Husband or his Relatives", min_value=0, value=0)
 
         submitted = st.form_submit_button("Submit Record")
+
 
         if submitted:
             new_row = {
@@ -208,6 +196,7 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
 
