@@ -78,7 +78,7 @@ if state and district:
 
 
 # =====================
-# 2. USER-REPORTED CRIME INPUT (NEW FEATURE)
+# 2. USER-REPORTED CRIME INPUT
 # =====================
 if st.session_state.show_report and state and district:
 
@@ -116,7 +116,7 @@ if st.session_state.show_report and state and district:
 
 
 # =====================
-# 3. MAIN ANALYSIS BUTTON
+# 3. ANALYSIS
 # =====================
 if st.button("Show Analysis"):
 
@@ -129,37 +129,90 @@ if st.button("Show Analysis"):
         if agg.empty:
             st.warning("No data for this selection.")
         else:
-            st.subheader(f"Time series for {state}" + (f", {district_sel}" if district_sel else ""))
+            st.subheader(f"Crime Analysis for {state}" + (f" - {district_sel}" if district_sel else ""))
 
-            st.plotly_chart(plot_time_series(agg, title="Crime counts over years"), use_container_width=True)
+            # --------------------
+            # TIME SERIES
+            # --------------------
+            st.plotly_chart(plot_time_series(agg, title="Year-wise Crime Trend"), use_container_width=True)
+
+            trend = agg.iloc[:, 1:].sum(axis=1)
+            if trend.iloc[-1] > trend.iloc[0]:
+                st.info("📈 Crime trend is increasing over the years in this region.")
+            else:
+                st.info("📉 Crime trend is decreasing or stable over the years in this region.")
+
+
+            # --------------------
+            # TOP CRIMES
+            # --------------------
             st.plotly_chart(plot_top_crimes(agg), use_container_width=True)
+
+            crime_totals = agg.iloc[:, 1:].sum()
+            top_crime = crime_totals.idxmax()
+            st.warning(f"🚨 The most common crime in this region is: **{top_crime}**")
+
+
+            # --------------------
+            # PIE CHART
+            # --------------------
             st.plotly_chart(plot_pie_composition(agg), use_container_width=True)
+
+            top_share = (crime_totals.max() / crime_totals.sum()) * 100
+            st.info(f"📊 **{top_crime}** accounts for about **{top_share:.1f}%** of all major crimes here.")
+
+
+            # --------------------
+            # HEATMAP
+            # --------------------
             st.plotly_chart(correlation_heatmap(agg), use_container_width=True)
 
-            # Bootstrap stats
+            st.write(
+                "🧩 The heatmap shows which crimes increase together. "
+                "Darker colors mean crimes are related (when one rises, the other also tends to rise)."
+            )
+
+
+            # --------------------
+            # BOOTSTRAP MEAN
+            # --------------------
             rape_series = agg["Rape"].values
             mean_rape, ci_rape = bootstrap_ci(rape_series, np.mean, n_boot=2000)
-            st.write("Rape — mean per year:", round(mean_rape, 2))
-            st.write("95% bootstrap CI:", (round(ci_rape[0], 2), round(ci_rape[1], 2)))
 
-            # Forecast
+            st.write(f"📌 Average reported rape cases per year: **{round(mean_rape, 2)}**")
+            st.write(f"📌 Expected yearly range: between **{round(ci_rape[0], 2)} and {round(ci_rape[1], 2)}** cases")
+
+
+            # --------------------
+            # FORECAST
+            # --------------------
             ts = agg.set_index("Year")["Rape"]
             if len(ts) >= 3:
                 pred_df, model = forecast_series(ts, order=(1, 1, 1), steps=5)
-                fig_df = pd.concat([ts.rename("observed"), pred_df["mean"].rename("forecast")])
-                st.line_chart(fig_df)
-            else:
-                st.info("Not enough years to forecast.")
+                st.line_chart(pd.concat([ts, pred_df["mean"]]))
 
-            # Similarity
+                future_avg = pred_df["mean"].mean()
+                st.success(f"🔮 Predicted future rape cases per year ≈ **{future_avg:.1f}**")
+
+            else:
+                st.info("Not enough data for prediction.")
+
+
+            # --------------------
+            # SIMILAR AREAS
+            # --------------------
             matrix = build_feature_matrix(df)
             try:
                 recs = recommend_similar((state, district_sel if district_sel else ""), matrix)
-                st.subheader("Similar areas (by crime profile)")
+
+                st.subheader("Similar Areas Based on Crime Pattern")
                 for r, s in recs:
-                    st.write(r, round(s, 3))
+                    st.write(f"• {r} (Similarity score: {round(s,3)})")
+
+                st.info("These areas show similar crime behavior. Safety strategies used there may also work here.")
+
             except:
-                st.info("Could not compute similarity — showing top districts instead.")
+                st.info("Showing high-risk districts in the same state instead.")
                 top = (
                     df[df['STATE/UT'] == state]
                     .groupby("DISTRICT")[["Rape"]]
@@ -168,4 +221,3 @@ if st.button("Show Analysis"):
                     .head(5)
                 )
                 st.table(top)
-
