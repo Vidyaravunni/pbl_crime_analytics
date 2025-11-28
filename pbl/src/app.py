@@ -170,8 +170,8 @@ else:
 
         if submitted:
             new_row = {
-                'STATE/UT': state_ut.strip().title(),
-                'DISTRICT': district.strip().title(),
+                'STATE/UT': state_ut,
+                'DISTRICT': district,
                 'Year': int(year),
                 'Rape': int(rape),
                 'Kidnapping and Abduction': int(kidnap),
@@ -196,6 +196,7 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
 
