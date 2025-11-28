@@ -1,33 +1,37 @@
-
-
-# pbl/src/app.py
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import time
 
-from preprocess import aggregate_by_area
+from preprocess import load_and_clean, aggregate_by_area
 from eda import plot_time_series, plot_top_crimes, plot_pie_composition, correlation_heatmap
 from stats_utils import bootstrap_ci, two_sample_ttest
 from ts_forecast import forecast_series
 from similarity import build_feature_matrix, recommend_similar
 
+DATA_PATH = "data/crime_data.csv"
 
-# =====================
-# DATA LOADING
-# =====================
+
 @st.cache_data
-def load_and_clean():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
+def load_and_clean(path=DATA_PATH):
+    path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
     df = pd.read_csv(path)
 
+    # Normalize column names
     df.columns = df.columns.str.strip()
-    df['Year'] = df['Year'].astype(int, errors='ignore')
 
+    # Convert Year to int (if needed)
+    if 'Year' in df.columns:
+        df['Year'] = df['Year'].astype(int, errors='ignore')
+
+    # Remove rows where District == 'Total'
     df = df[df['DISTRICT'].str.strip().str.lower() != 'total']
+
+    # Normalize STATE/UT names
     df['STATE/UT'] = df['STATE/UT'].str.strip().str.title()
 
+    # Fix known duplicates / inconsistent names
     df['STATE/UT'] = df['STATE/UT'].replace({
         'A & N Island': 'A&N Islands',
         'A & N Islands': 'A&N Islands',
@@ -39,108 +43,167 @@ def load_and_clean():
         'D & N Haveli And Daman & Diu': 'D&N Haveli And Daman & Diu'
     })
 
+    # Drop duplicates
     df = df.drop_duplicates()
+
     return df
 
 
+# Load dataset
 df = load_and_clean()
 
+# ===== Initialize session state =====
+if "show_form" not in st.session_state:
+    st.session_state.show_form = False
 
-# =====================
-# UI HEADER
-# =====================
-st.title("Crime Pattern Analysis — State/District Dashboard")
+# ===== Sidebar section =====
+st.sidebar.header("Add New Record")
 
+# ---- Custom CSS for Red Button ----
+st.markdown("""
+    <style>
+    div.stButton > button:first-child {
+        background-color: #e63946;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #d62828;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# =====================
-# 1. USER INPUT SECTION (STATE + DISTRICT)
-# =====================
-states = sorted(df['STATE/UT'].unique())
-state = st.selectbox("Select State/UT", [""] + states)
+# Dynamic button name
+button_label = "📝 Report a Crime" if not st.session_state.show_form else "🔙 Back to Dashboard"
 
-districts = []
-if state:
-    districts = sorted(df[df['STATE/UT'] == state]['DISTRICT'].unique())
+if st.sidebar.button(button_label):
+    st.session_state.show_form = not st.session_state.show_form
+    st.rerun()
 
-district = st.selectbox("Select District (optional)", [""] + districts)
+# ===== MAIN CONTENT =====
 
+if not st.session_state.show_form:
+    # -------------------- Dashboard --------------------
+    st.title("Crime Pattern Analysis — State/District Dashboard")
 
-# =====================
-# 2. USER-REPORTED CRIME INPUT (NEW FEATURE)
-# =====================
-if state and district:
-    st.subheader("Have you personally faced any of these crimes? (Optional)")
+    # Input selectors
+    states = sorted(df['STATE/UT'].unique())
+    state = st.selectbox("Select State/UT", [""] + states)
 
-    crime_columns = [
-        "Rape",
-        "Kidnapping and Abduction",
-        "Dowry Deaths",
-        "Assault on women with intent to outrage her modesty",
-        "Insult to modesty of Women",
-        "Cruelty by Husband or his Relatives"
-    ]
+    districts = []
+    if state:
+        districts = sorted(df[df['STATE/UT'] == state]['DISTRICT'].unique())
+    district = st.selectbox("Select District (optional)", [""] + districts)
 
-    user_inputs = {}
-
-    for col in crime_columns:
-        user_inputs[col] = st.number_input(
-            f"Enter number of incidents for '{col}'",
-            min_value=0,
-            value=0
-        )
-
-    if st.button("Update Crime Count for Selected District"):
-        for col in crime_columns:
-            df.loc[(df['STATE/UT'] == state) & (df['DISTRICT'] == district), col] += user_inputs[col]
-
-        st.success("Crime data updated for this district!")
-
-
-# =====================
-# 3. MAIN ANALYSIS BUTTON
-# =====================
-if st.button("Show Analysis"):
-
-    if not state:
-        st.error("Please select a state.")
-    else:
-        district_sel = district if district else None
-        agg = aggregate_by_area(df, state, district_sel)
-
-        if agg.empty:
-            st.warning("No data for this selection.")
+    if st.button("Show Analysis"):
+        if not state:
+            st.error("Please select a state.")
         else:
-            st.subheader(f"Time series for {state}" + (f", {district_sel}" if district_sel else ""))
+            district_sel = district if district else None
+            agg = aggregate_by_area(df, state, district_sel)
 
-            st.plotly_chart(plot_time_series(agg, title="Crime counts over years"), use_container_width=True)
-            st.plotly_chart(plot_top_crimes(agg), use_container_width=True)
-            st.plotly_chart(plot_pie_composition(agg), use_container_width=True)
-            st.plotly_chart(correlation_heatmap(agg), use_container_width=True)
-
-            # Bootstrap stats
-            rape_series = agg["Rape"].values
-            mean_rape, ci_rape = bootstrap_ci(rape_series, np.mean, n_boot=2000)
-            st.write("Rape — mean per year:", round(mean_rape, 2))
-            st.write("95% bootstrap CI:", (round(ci_rape[0], 2), round(ci_rape[1], 2)))
-
-            # Forecast
-            ts = agg.set_index("Year")["Rape"]
-            if len(ts) >= 3:
-                pred_df, model = forecast_series(ts, order=(1, 1, 1), steps=5)
-                fig_df = pd.concat([ts.rename("observed"), pred_df["mean"].rename("forecast")])
-                st.line_chart(fig_df)
+            if agg.empty:
+                st.warning("No data for this selection.")
             else:
-                st.info("Not enough years to forecast.")
+                st.subheader(f"Time series for {state}" + (f", {district_sel}" if district_sel else ""))
+                st.plotly_chart(plot_time_series(agg, title="Crime counts over years"), use_container_width=True)
+                st.plotly_chart(plot_top_crimes(agg), use_container_width=True)
+                st.plotly_chart(plot_pie_composition(agg), use_container_width=True)
+                st.plotly_chart(correlation_heatmap(agg), use_container_width=True)
 
-            # Similarity
-            matrix = build_feature_matrix(df)
-            try:
-                recs = recommend_similar((state, district_sel if district_sel else ""), matrix)
-                st.subheader("Similar areas (by crime profile)")
-                for r, s in recs:
-                    st.write(r, round(s, 3))
-            except:
-                st.info("Could not compute similarity — showing top districts instead.")
-                top = df[df['STATE/UT'] == state].groupby("DISTRICT")[["Rape"]].sum().sort_values("Rape", ascending=False).head(5)
-                st.table(top)
+                # Bootstrap CI example for Rape
+                rape_series = agg['Rape'].values
+                mean_rape, ci_rape = bootstrap_ci(rape_series, np.mean, n_boot=2000)
+                st.write("Rape — mean per year:", round(mean_rape, 2))
+                st.write("95% bootstrap CI:", (round(ci_rape[0], 2), round(ci_rape[1], 2)))
 
+                # Forecast example (Rape)
+                ts = agg.set_index('Year')['Rape']
+                if len(ts) >= 3:
+                    pred_df, model = forecast_series(ts, order=(1, 1, 1), steps=5)
+                    fig_df = pd.concat([ts.rename('observed'), pred_df['mean'].rename('forecast')], axis=0)
+                    st.line_chart(fig_df)
+                else:
+                    st.info("Not enough years to forecast reliably (need >=3).")
+
+                # Similarity recommendation
+                matrix = build_feature_matrix(df)
+                try:
+                    recs = recommend_similar((state, district_sel if district_sel else ""), matrix)
+                    st.subheader("Similar areas (by crime profile)")
+                    for r, s in recs:
+                        st.write(r, round(s, 3))
+                except Exception:
+                    st.info("Could not compute similarity for this selection; showing top districts in same state.")
+                    top = (
+                        df[df['STATE/UT'] == state]
+                        .groupby('DISTRICT')[['Rape']]
+                        .sum()
+                        .sort_values('Rape', ascending=False)
+                        .head(5)
+                    )
+                    st.table(top)
+
+    # Sidebar information
+    st.sidebar.header("Project Modules")
+    st.sidebar.markdown("""
+    - EDA: time series, heatmaps  
+    - Stats: bootstrap CI, t-tests  
+    - Forecasting: ARIMA  
+    - Similarity & recommender  
+    - Optional: NLP, network analysis  
+    """)
+
+else:
+    # -------------------- Report Form --------------------
+    st.subheader("Report a New Crime Record")
+
+    with st.form("crime_report_form", clear_on_submit=True):
+        st.write("### Enter Crime Details")
+
+        # Dropdowns and inputs
+        state_ut = st.selectbox("Select State", sorted(df['STATE/UT'].unique()))
+        district = st.text_input("District Name")
+        year = st.number_input("Year", min_value=2001, max_value=2030, value=2025)
+
+        st.markdown("#### Enter Crime Counts:")
+        rape = st.number_input("Rape", min_value=0, value=0)
+        kidnap = st.number_input("Kidnapping and Abduction", min_value=0, value=0)
+        dowry = st.number_input("Dowry Deaths", min_value=0, value=0)
+        assault = st.number_input("Assault on women with intent to outrage her modesty", min_value=0, value=0)
+        insult = st.number_input("Insult to modesty of Women", min_value=0, value=0)
+        cruelty = st.number_input("Cruelty by Husband or his Relatives", min_value=0, value=0)
+
+        submitted = st.form_submit_button("Submit Record")
+
+        if submitted:
+            new_row = {
+                'STATE/UT': state_ut.strip().title(),
+                'DISTRICT': district.strip().title(),
+                'Year': int(year),
+                'Rape': int(rape),
+                'Kidnapping and Abduction': int(kidnap),
+                'Dowry Deaths': int(dowry),
+                'Assault on women with intent to outrage her modesty': int(assault),
+                'Insult to modesty of Women': int(insult),
+                'Cruelty by Husband or his Relatives': int(cruelty)
+            }
+
+            csv_path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
+
+            # Append directly to CSV
+            existing_df = pd.read_csv(csv_path)
+            missing_cols = [c for c in existing_df.columns if c not in new_row]
+            for col in missing_cols:
+                new_row[col] = 0
+
+            updated_df = pd.concat([existing_df, pd.DataFrame([new_row])], ignore_index=True)
+            updated_df.to_csv(csv_path, index=False)
+
+            st.success("✅ Report added successfully!")
+            time.sleep(2)
+            st.session_state.show_form = False
+            st.rerun()
