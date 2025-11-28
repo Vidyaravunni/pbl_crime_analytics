@@ -103,7 +103,7 @@ if st.session_state.show_report and state and district:
             key=col
         )
 
-    if st.button("✅ Submit Report"):
+    if st.button("Submit Report"):
         for col in crime_columns:
             df.loc[
                 (df['STATE/UT'] == state) &
@@ -111,7 +111,7 @@ if st.session_state.show_report and state and district:
                 col
             ] += user_inputs[col]
 
-        st.success("✅ Crime report successfully recorded!")
+        st.success("Crime report successfully recorded!")
         st.session_state.show_report = False
 
 
@@ -138,9 +138,9 @@ if st.button("Show Analysis"):
 
             trend = agg.iloc[:, 1:].sum(axis=1)
             if trend.iloc[-1] > trend.iloc[0]:
-                st.info("📈 Crime trend is increasing over the years in this region.")
+                st.info("Crime trend is increasing over the years in this region.")
             else:
-                st.info("📉 Crime trend is decreasing or stable over the years in this region.")
+                st.info("Crime trend is decreasing or stable over the years in this region.")
 
 
             # --------------------
@@ -150,7 +150,7 @@ if st.button("Show Analysis"):
 
             crime_totals = agg.iloc[:, 1:].sum()
             top_crime = crime_totals.idxmax()
-            st.warning(f"🚨 The most common crime in this region is: **{top_crime}**")
+            st.warning(f"The most common crime in this region is: **{top_crime}**")
 
 
             # --------------------
@@ -159,7 +159,7 @@ if st.button("Show Analysis"):
             st.plotly_chart(plot_pie_composition(agg), use_container_width=True)
 
             top_share = (crime_totals.max() / crime_totals.sum()) * 100
-            st.info(f"📊 **{top_crime}** accounts for about **{top_share:.1f}%** of all major crimes here.")
+            st.info(f"**{top_crime}** accounts for about **{top_share:.1f}%** of all major crimes here.")
 
 
             # --------------------
@@ -168,7 +168,7 @@ if st.button("Show Analysis"):
             st.plotly_chart(correlation_heatmap(agg), use_container_width=True)
 
             st.write(
-                "🧩 The heatmap shows which crimes increase together. "
+                " The heatmap shows which crimes increase together. "
                 "Darker colors mean crimes are related (when one rises, the other also tends to rise)."
             )
 
@@ -179,8 +179,8 @@ if st.button("Show Analysis"):
             rape_series = agg["Rape"].values
             mean_rape, ci_rape = bootstrap_ci(rape_series, np.mean, n_boot=2000)
 
-            st.write(f"📌 Average reported rape cases per year: **{round(mean_rape, 2)}**")
-            st.write(f"📌 Expected yearly range: between **{round(ci_rape[0], 2)} and {round(ci_rape[1], 2)}** cases")
+            st.write(f"Average reported rape cases per year: **{round(mean_rape, 2)}**")
+            st.write(f"Expected yearly range: between **{round(ci_rape[0], 2)} and {round(ci_rape[1], 2)}** cases")
 
 
             # --------------------
@@ -192,7 +192,7 @@ if st.button("Show Analysis"):
                 st.line_chart(pd.concat([ts, pred_df["mean"]]))
 
                 future_avg = pred_df["mean"].mean()
-                st.success(f"🔮 Predicted future rape cases per year ≈ **{future_avg:.1f}**")
+                st.success(f"Predicted future rape cases per year ≈ **{future_avg:.1f}**")
 
             else:
                 st.info("Not enough data for prediction.")
@@ -221,3 +221,4 @@ if st.button("Show Analysis"):
                     .head(5)
                 )
                 st.table(top)
+
