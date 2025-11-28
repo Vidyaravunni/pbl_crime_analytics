@@ -155,8 +155,7 @@ else:
     with st.form("crime_report_form", clear_on_submit=True):
         st.write("### Enter Crime Details")
 
-        # Dropdowns and inputs
-
+        # Dropdowns and inputs# Input selectors
         states = sorted(df['STATE/UT'].unique())
         state = st.selectbox("Select State/UT", [""] + states)
 
@@ -205,6 +204,7 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
 
