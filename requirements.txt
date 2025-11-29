@@ -10,3 +10,4 @@ statsmodels
 networkx
 wordcloud
 prophet
+reportlab
