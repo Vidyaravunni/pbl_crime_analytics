@@ -118,7 +118,7 @@ def generate_pdf_report(agg, state, district):
 # ===========================
 @st.cache_data
 def load_and_clean_data():
-    path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
+    path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
     df = pd.read_csv(path)
 
     df.columns = df.columns.str.strip()
@@ -277,7 +277,7 @@ else:
                 'Cruelty by Husband or his Relatives': int(cruelty)
             }
 
-            csv_path = os.path.join(os.path.dirname(_file_), "..", "data", "crime_data.csv")
+            csv_path = os.path.join(os.path.dirname(__file__), "..", "data", "crime_data.csv")
 
             existing_df = pd.read_csv(csv_path)
             missing_cols = [c for c in existing_df.columns if c not in new_row]
@@ -291,3 +291,4 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
