@@ -236,7 +236,7 @@ if not st.session_state.show_form:
                     st.subheader("Areas with Similar Crime Patterns")
 
                     for (st_name, dist_name), score in recs:
-                        st.write(f"📍 {dist_name}, {st_name} — Similarity Score: {score:.3f}")
+                        st.write(f"📍 {dist_name}, {st_name} —  {score:.3f}")
 
                     st.caption(
                         "Higher similarity score means the district has a crime pattern very close to the selected area. "
@@ -313,6 +313,7 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
 
