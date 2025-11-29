@@ -229,21 +229,39 @@ if not st.session_state.show_form:
 
                 # Similarity recommendations
                 matrix = build_feature_matrix(df)
+
                 try:
                     recs = recommend_similar((state, district_sel if district_sel else ""), matrix)
-                    st.subheader("Similar Areas (by crime profile)")
-                    for r, s in recs:
-                        st.write(r, round(s, 3))
+    
+                    st.subheader("Areas with Similar Crime Patterns")
+
+                    for (st_name, dist_name), score in recs:
+                        st.write(f"📍 {dist_name}, {st_name} — Similarity Score: {score:.3f}")
+
+                    st.caption(
+                        "Higher similarity score means the district has a crime pattern very close to the selected area. "
+                        "Similarity is based on crime types and frequency, not geographic distance."
+                    )
+
                 except Exception:
-                    st.info("Could not compute similarity — showing top districts by Rape.")
+
+                    st.info("Could not compute similarity. Showing districts with highest reported cases instead.")
+
                     top = (
                         df[df['STATE/UT'] == state]
                         .groupby('DISTRICT')[['Rape']]
                         .sum()
                         .sort_values('Rape', ascending=False)
                         .head(5)
+                        .reset_index()
                     )
+
                     st.table(top)
+
+                    st.caption(
+                        "These districts show the highest reported cases when similarity calculation is not possible."
+                    )
+
 
                 # 🔥 *Generate PDF Summary Report at the END*
                 generate_pdf_report(agg, state, district_sel)
@@ -295,5 +313,6 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
 
