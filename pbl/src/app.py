@@ -212,8 +212,12 @@ if not st.session_state.show_form:
 
                 rape_series = agg['Rape'].values
                 mean_rape, ci_rape = bootstrap_ci(rape_series, np.mean, n_boot=2000)
-                st.write("*Rape — Mean per year:*", round(mean_rape, 2))
-                st.write("*95% Bootstrap CI:*", (round(ci_rape[0], 2), round(ci_rape[1], 2)))
+                st.write(f"*Average rape cases per year:* {float(mean_rape):.2f}")
+                lower = float(ci_rape[0])
+                upper = float(ci_rape[1])
+
+                st.write(f"*95% Confidence Interval:* {lower:.2f} to {upper:.2f} cases per year")
+
 
                 ts = agg.set_index('Year')['Rape']
                 if len(ts) >= 3:
@@ -291,4 +295,5 @@ else:
             time.sleep(2)
             st.session_state.show_form = False
             st.rerun()
+
 
