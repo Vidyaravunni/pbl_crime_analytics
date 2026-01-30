@@ -1,8 +1,9 @@
-# Core
 streamlit==1.19.0
-altair==4.2.2
 
-# Python 3.13 compatible scientific stack
+# HARD constraint: Streamlit 1.19 needs Altair v4
+altair<5
+
+# Python 3.13 compatible core
 numpy>=2.0.0
 pandas>=2.1.0
 scipy>=1.12.0
@@ -12,14 +13,12 @@ matplotlib>=3.8.0
 seaborn>=0.13.0
 plotly>=5.20.0
 
-# ML / Stats
+# ML / stats
 scikit-learn>=1.4.0
 statsmodels>=0.14.0
 networkx>=3.2
 
-# NLP / Visual extras
+# Extras
 wordcloud>=1.9.3
 reportlab>=4.0.0
-
-# Time series
 prophet>=1.1.5
